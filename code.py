@@ -37,24 +37,36 @@ for row_pin in keypad_rows:
     row.pull = digitalio.Pull.DOWN  # Active le pull-down interne
     rows.append(row)
 
+# Suivi de l'état des touches
+previous_state = [[False] * len(cols) for _ in range(len(rows))]
+
 # Fonction pour scanner la matrice
 def scan_matrix():
+    current_state = [[False] * len(cols) for _ in range(len(rows))]
     for col_index, col in enumerate(cols):
         col.value = True  # Activer une colonne
-        # print(f"Colonne {col_index} activée")
         for row_index, row in enumerate(rows):
             if row.value:  # Si un bouton est pressé
-                print(f"  → Touche détectée : Colonne {col_index}, Rangée {row_index}")
-                col.value = False  # Désactiver la colonne avant de sortir
-                return col_index, row_index
+                current_state[row_index][col_index] = True
         col.value = False  # Désactiver la colonne
-    return None, None
+    return current_state
 
 # Boucle principale
 while True:
-    col, row = scan_matrix()
-    if col is not None and row is not None:
-        key = matrix_keys[row][col]
-        print(f"Envoi de la touche : {key}")  # Affiche la touche envoyée
-        keyboard.press(key)  # Simule une pression de touche
-        keyboard.release_all()  # Relâche toutes les touches
+    current_state = scan_matrix()
+    for row_index, row in enumerate(current_state):
+        for col_index, pressed in enumerate(row):
+            # Si une touche est pressée et n'était pas pressée auparavant
+            if pressed and not previous_state[row_index][col_index]:
+                key = matrix_keys[row_index][col_index]
+                print(f"Pression de la touche : {key}")
+                keyboard.press(key)  # Simule une pression de touche
+
+            # Si une touche était pressée et ne l'est plus
+            elif not pressed and previous_state[row_index][col_index]:
+                key = matrix_keys[row_index][col_index]
+                print(f"Relâchement de la touche : {key}")
+                keyboard.release(key)  # Relâche explicitement la touche
+
+    # Mettre à jour l'état précédent
+    previous_state = current_state
