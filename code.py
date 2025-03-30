@@ -4,6 +4,8 @@ import usb_hid
 from adafruit_hid.keyboard import Keyboard
 from adafruit_hid.keycode import Keycode
 
+DEBUG = True
+
 # Initialisation du clavier HID
 keyboard = Keyboard(usb_hid.devices)
 
@@ -34,7 +36,17 @@ keypad_cols = [
     board.GP15,
     board.GP14,
     board.GP13,
-    board.GP12
+    board.GP12,
+    board.GP11,
+    board.GP10,
+    board.GP9,
+    board.GP8,
+    board.GP7,
+    board.GP6,
+    board.GP5,
+    board.GP4,
+    board.GP3,
+    board.GP2,
 ]
 
 # Configuration des broches des colonnes
@@ -67,6 +79,32 @@ def scan_matrix():
         col.value = False  # Désactiver la colonne
     return current_state
 
+print("📌 Liste des broches des rangées :", keypad_rows)
+print("📌 Liste des broches des colonnes :", keypad_cols)
+
+import time
+def check_for_short_circuit():
+    print("🔍 Vérification des pins en cours...")
+    time.sleep(5)
+
+    short_circuits = []
+
+    initial_state = scan_matrix()
+    for row_index, row in enumerate(initial_state):
+        for col_index, pressed in enumerate(row):
+            if pressed:
+                short_circuits.append((keypad_rows[row_index], keypad_cols[col_index]))
+
+    if short_circuits:
+        print("⚠️ Erreur : Court-circuit détecté ! Vérifiez votre câblage.")
+        for row_pin, col_pin in short_circuits:
+            print(f"🔴 Court-circuit entre {row_pin} et {col_pin}")
+    else:
+        print("✅ Aucun court-circuit détecté.")
+
+if DEBUG:
+    check_for_short_circuit()
+
 # Boucle principale
 while True:
     current_state = scan_matrix()
@@ -76,13 +114,15 @@ while True:
             if pressed and not previous_state[row_index][col_index]:
                 key = matrix_keys[row_index][col_index]
                 print(f"ON {key} ({row_index}, {col_index})")
-                keyboard.press(key)  # Simule une pression de touche
+                if not DEBUG:
+                    keyboard.press(key)
 
             # Si une touche était pressée et ne l'est plus
             elif not pressed and previous_state[row_index][col_index]:
                 key = matrix_keys[row_index][col_index]
                 print(f"OF {key} ({row_index}, {col_index})")
-                keyboard.release(key)  # Relâche explicitement la touche
+                if DEBUG:
+                    keyboard.release(key)
 
     # Mettre à jour l'état précédent
     previous_state = current_state
