@@ -9,17 +9,33 @@ keyboard = Keyboard(usb_hid.devices)
 
 # Définition de la matrice des touches
 matrix_keys = [
-    [Keycode.ONE, Keycode.TWO, Keycode.THREE, Keycode.FOUR, Keycode.FIVE],
-    [Keycode.SIX, Keycode.SEVEN, Keycode.EIGHT, Keycode.NINE, Keycode.ZERO],
+    [Keycode.ESCAPE, Keycode.F1, Keycode.F2, Keycode.F3, Keycode.F4],
+    [Keycode.GRAVE_ACCENT, Keycode.ONE, Keycode.EIGHT, Keycode.NINE, Keycode.ZERO],
     [Keycode.A, Keycode.B, Keycode.C, Keycode.D, Keycode.E],
     [Keycode.F, Keycode.G, Keycode.H, Keycode.I, Keycode.J],
-    [Keycode.K, Keycode.L, Keycode.M, Keycode.N, Keycode.O]
+    [Keycode.K, Keycode.L, Keycode.M, Keycode.N, Keycode.O, Keycode.P, Keycode.Q],
+    [Keycode.LEFT_CONTROL, Keycode.GUI, Keycode.M, Keycode.N, Keycode.O]
 ]
 
-# Broches utilisées pour les colonnes (sorties)
-keypad_rows = [board.GP25, board.GP24, board.GP23, board.GP22, board.GP21]
-# Broches utilisées pour les rangées (entrées)
-keypad_cols = [board.GP0, board.GP1, board.GP3, board.GP4, board.GP5]
+# pins used for columns (outputs)
+keypad_rows = [
+    board.GP18,
+    board.GP19,
+    board.GP20,
+    board.GP21,
+    board.GP22,
+    board.GP23
+]
+
+# pins used for rows (inputs)
+keypad_cols = [
+    board.GP17,
+    board.GP16,
+    board.GP15,
+    board.GP14,
+    board.GP13,
+    board.GP12
+]
 
 # Configuration des broches des colonnes
 cols = []
@@ -59,13 +75,13 @@ while True:
             # Si une touche est pressée et n'était pas pressée auparavant
             if pressed and not previous_state[row_index][col_index]:
                 key = matrix_keys[row_index][col_index]
-                print(f"Pression de la touche : {key}")
+                print(f"ON {key} ({row_index}, {col_index})")
                 keyboard.press(key)  # Simule une pression de touche
 
             # Si une touche était pressée et ne l'est plus
             elif not pressed and previous_state[row_index][col_index]:
                 key = matrix_keys[row_index][col_index]
-                print(f"Relâchement de la touche : {key}")
+                print(f"OF {key} ({row_index}, {col_index})")
                 keyboard.release(key)  # Relâche explicitement la touche
 
     # Mettre à jour l'état précédent
