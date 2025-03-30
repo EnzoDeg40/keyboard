@@ -3,21 +3,27 @@ import digitalio
 import usb_hid
 from adafruit_hid.keyboard import Keyboard
 from adafruit_hid.keycode import Keycode
+import time
 
-DEBUG = True
+class Config:
+    CHECK_CIRCUIT_CUT = False
+    REAL_PRESS = True
 
 # Initialisation du clavier HID
 keyboard = Keyboard(usb_hid.devices)
 
 # Définition de la matrice des touches
 matrix_keys = [
-    [Keycode.ESCAPE, Keycode.F1, Keycode.F2, Keycode.F3, Keycode.F4],
-    [Keycode.GRAVE_ACCENT, Keycode.ONE, Keycode.EIGHT, Keycode.NINE, Keycode.ZERO],
+    [Keycode.ESCAPE, Keycode.F1, Keycode.F2, Keycode.F3, Keycode.F4, Keycode.F5, Keycode.F6, Keycode.F7, Keycode.F8, Keycode.F9, Keycode.F10, Keycode.F11, Keycode.F12, Keycode.PRINT_SCREEN, Keycode.PAUSE, Keycode.DELETE],
+    [Keycode.GRAVE_ACCENT, Keycode.ONE, Keycode.TWO, Keycode.THREE, Keycode.FOUR, Keycode.FIVE, Keycode.SIX, Keycode.SEVEN, Keycode.EIGHT, Keycode.NINE, Keycode.ZERO, Keycode.MINUS, None, Keycode.EQUALS, Keycode.BACKSPACE, Keycode.HOME],
     [Keycode.A, Keycode.B, Keycode.C, Keycode.D, Keycode.E],
     [Keycode.F, Keycode.G, Keycode.H, Keycode.I, Keycode.J],
     [Keycode.K, Keycode.L, Keycode.M, Keycode.N, Keycode.O, Keycode.P, Keycode.Q],
     [Keycode.LEFT_CONTROL, Keycode.GUI, Keycode.M, Keycode.N, Keycode.O]
 ]
+
+# Inverser la liste des touches dans la matrice
+matrix_keys = matrix_keys[::-1]
 
 # pins used for columns (outputs)
 keypad_rows = [
@@ -82,7 +88,6 @@ def scan_matrix():
 print("📌 Liste des broches des rangées :", keypad_rows)
 print("📌 Liste des broches des colonnes :", keypad_cols)
 
-import time
 def check_for_short_circuit():
     print("🔍 Vérification des pins en cours...")
     time.sleep(5)
@@ -102,7 +107,7 @@ def check_for_short_circuit():
     else:
         print("✅ Aucun court-circuit détecté.")
 
-if DEBUG:
+if Config.CHECK_CIRCUIT_CUT:
     check_for_short_circuit()
 
 # Boucle principale
@@ -110,19 +115,23 @@ while True:
     current_state = scan_matrix()
     for row_index, row in enumerate(current_state):
         for col_index, pressed in enumerate(row):
-            # Si une touche est pressée et n'était pas pressée auparavant
             if pressed and not previous_state[row_index][col_index]:
-                key = matrix_keys[row_index][col_index]
-                print(f"ON {key} ({row_index}, {col_index})")
-                if not DEBUG:
-                    keyboard.press(key)
+                # Vérifie si la touche existe dans la matrice
+                if row_index < len(matrix_keys) and col_index < len(matrix_keys[row_index]):
+                    key = matrix_keys[row_index][col_index]
+                    print(f"ON {key} ({row_index}, {col_index})")
+                    if Config.REAL_PRESS:
+                        keyboard.press(key)
+                else:
+                    print(f"⚠️ {row_index}, {col_index} n'a pas de touche associée.")
 
-            # Si une touche était pressée et ne l'est plus
             elif not pressed and previous_state[row_index][col_index]:
-                key = matrix_keys[row_index][col_index]
-                print(f"OF {key} ({row_index}, {col_index})")
-                if DEBUG:
-                    keyboard.release(key)
-
+                # Vérifie si la touche existe dans la matrice
+                if row_index < len(matrix_keys) and col_index < len(matrix_keys[row_index]):
+                    key = matrix_keys[row_index][col_index]
+                    print(f"OF {key} ({row_index}, {col_index})")
+                    if Config.REAL_PRESS:
+                        keyboard.release(key)
+    
     # Mettre à jour l'état précédent
     previous_state = current_state
